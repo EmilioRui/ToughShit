@@ -215,8 +215,8 @@ def make_dispersive(H, fock_trunc, fzpfs=None, f0s=None, chi_prime=False,
     else:
         return np.array(f1s), np.array(chis), np.array(fzpfs), np.array(f0s)
     
+        
 def qutip_diag(mode_freqs,junc_freq,f_zp,fock_trunc,n_modes):
     H=black_box_hamiltonian(mode_freqs,junc_freq,f_zp,fock_trunc=fock_trunc)
     evals, evecs = H.eigenstates()
     return evals
-

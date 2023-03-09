@@ -1,6 +1,7 @@
 import qutip
 from qutip import basis, tensor
 import numpy as np
+import json
 _initial_missing = object()
 def dot(ais, bis):
     """

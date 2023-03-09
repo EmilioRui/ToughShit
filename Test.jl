@@ -1,11 +1,11 @@
 using PyCall
 using ITensors
+using JSON
 push!(pyimport("sys")."path", pwd())
 
 
-function MPO_generator(sites,n_modes,njuncs,fock_trunc)
+function MPO_generator(sites,mode_freqs,junc_freq,f_zp,fock_trunc)
     np = pyimport("numpy")
-    global mode_freqs,junc_freq,f_zp
 
    # f_zp =np.ones([n_modes,njuncs])
 
@@ -28,7 +28,7 @@ function MPO_generator(sites,n_modes,njuncs,fock_trunc)
 end
 
 
-function dmrg_A_B(H_MPO;n_eigs, nsweeps , maxdim , cutoff )
+function dmrg_A_B(H_MPO,sites,n_eigs, nsweeps , maxdim , cutoff )
     eigenvectors = []
     eigenvalues = []
     for i in 1:n_eigs   
@@ -57,8 +57,12 @@ function bench_dmrg(n_modes,njuncs,fock_trunc)
 
     #Julia Bench
     time_Julia = @elapsed begin
-    H_MPO = MPO_generator(sites,n_modes,njuncs,fock_trunc)
-    eigenvalues,eigenvectors = dmrg_A_B(H_MPO,n_eigs=n_modes, nsweeps=20 , maxdim=50 , cutoff=1e-10)
+    H_MPO = MPO_generator(sites,mode_freqs,junc_freq,f_zp,fock_trunc)
+    n_eigs=n_modes
+    nsweeps=20
+    maxdim=50
+    cutoff=1e-10
+    eigenvalues,eigenvectors = dmrg_A_B(H_MPO,sites,n_eigs, nsweeps, maxdim, cutoff)
     end
 
     #Qutip Bench

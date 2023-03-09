@@ -2,6 +2,7 @@ import qutip
 from qutip import basis, tensor
 import numpy as np
 import json
+
 _initial_missing = object()
 def dot(ais, bis):
     """
@@ -218,7 +219,7 @@ def make_dispersive(H, fock_trunc, fzpfs=None, f0s=None, chi_prime=False,
     
 def qutip_diag(mode_freqs,junc_freq,f_zp,fock_trunc,n_modes):
     H=black_box_hamiltonian(mode_freqs,junc_freq,f_zp,fock_trunc=fock_trunc)
-    evals, evecs = H.eigenstates()
+    evals, evecs = H.eigenstates(eigvals= len(mode_freqs))
     return evals
 
 

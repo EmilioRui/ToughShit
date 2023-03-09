@@ -74,9 +74,9 @@ function bench_dmrg(n_modes,njuncs,fock_trunc)
 
     print("Julia needed: ",time_Julia," s\n Qutip needed ", time_qutip, " s")
 
-    print("\n Julia evals: \n", eigenvalues)
-    print("\n Qutip evals: \n", evals_qutip)
-    add_result_to_file("DMRG_bench",time_qutip,time_Julia,n_modes)
+    # print("\n Julia evals: \n", eigenvalues)
+    # print("\n Qutip evals: \n", evals_qutip)
+    add_result_to_file("DMRG_bench 2.json",time_qutip,time_Julia,n_modes)
 end
 
 
@@ -99,13 +99,13 @@ function add_result_to_file(filename::String,time_qutip,time_Julia,n_modes)
     open(filename,"w") do f
     JSON.print(f, data)
     end
-    pyimport("Hamiltonian").indent_json(filename)
+    # pyimport("Hamiltonian").indent_json(filename)
 end
 
 
 
 
-n_modes_vec = [2]
+n_modes_vec = [3,4,5,6]
 njuncs = 3
 fock_trunc = 5
 

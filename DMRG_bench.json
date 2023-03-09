@@ -1,0 +1,24 @@
+{
+    "Simulations": [
+        {
+            "n_modes": 3,
+            "Qutip_time": 0.052621104,
+            "Julia_Time": 0.103206951
+        },
+        {
+            "n_modes": 4,
+            "Qutip_time": 0.540694631,
+            "Julia_Time": 0.892956736
+        },
+        {
+            "n_modes": 5,
+            "Qutip_time": 16.064771032,
+            "Julia_Time": 10.338036742
+        },
+        {
+            "n_modes": 6,
+            "Qutip_time": 1520.227941773,
+            "Julia_Time": 112.847948867
+        }
+    ]
+}

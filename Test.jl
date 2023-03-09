@@ -62,7 +62,7 @@ function bench_dmrg(n_modes,njuncs,fock_trunc)
     nsweeps=20
     maxdim=50
     cutoff=1e-10
-    eigenvalues,eigenvectors = dmrg_A_B(H_MPO,sites,n_eigs, nsweeps, maxdim, cutoff)
+    evals_dmrg,eigenvectors = dmrg_A_B(H_MPO,sites,n_eigs, nsweeps, maxdim, cutoff)
     end
 
     #Qutip Bench
@@ -76,14 +76,13 @@ function bench_dmrg(n_modes,njuncs,fock_trunc)
 
     # print("\n Julia evals: \n", eigenvalues)
     # print("\n Qutip evals: \n", evals_qutip)
-    add_result_to_file("DMRG_bench 2.json",time_qutip,time_Julia,n_modes)
+    add_result_to_file("DMRG_bench 2.json",time_qutip,time_Julia,n_modes,evals_qutip ,evals_dmrg)
 end
 
 
-function add_result_to_file(filename::String,time_qutip,time_Julia,n_modes)
+function add_result_to_file(filename::String,time_qutip,time_Julia,n_modes,evals_qutip,evals_dmrg)
 
-
-    new_data = Dict("Qutip_time"=>time_qutip, "Julia_Time"=>time_Julia, "n_modes"=>n_modes)
+    new_data = Dict("n_modes"=>n_modes,"Qutip_time"=>time_qutip, "Julia_Time"=>time_Julia,"Qutip Evals"=>evals_qutip,"DMRG evals"=>evals_dmrg)
     data = Dict()
     try
     # read the contents of the file into a string
@@ -99,13 +98,13 @@ function add_result_to_file(filename::String,time_qutip,time_Julia,n_modes)
     open(filename,"w") do f
     JSON.print(f, data)
     end
-    # pyimport("Hamiltonian").indent_json(filename)
+    pyimport("Hamiltonian").indent_json(filename)
 end
 
 
 
 
-n_modes_vec = [3,4,5,6]
+n_modes_vec = [2,3]
 njuncs = 3
 fock_trunc = 5
 

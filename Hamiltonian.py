@@ -220,3 +220,11 @@ def qutip_diag(mode_freqs,junc_freq,f_zp,fock_trunc,n_modes):
     evals, evecs = H.eigenstates()
     return evals
 
+
+
+
+def indent_json(filename):
+    with open(filename,'r') as f:
+        measures = json.load(f)
+    with open(filename,'w') as f:
+        json.dump(measures,f,indent=4)

@@ -3,7 +3,7 @@ using ITensors
 push!(pyimport("sys")."path", pwd())
 
 
-function MPO_generator(n_modes,njuncs,fock_trunc)
+function MPO_generator(sites,n_modes,njuncs,fock_trunc)
     np = pyimport("numpy")
     global mode_freqs,junc_freq,f_zp
 
@@ -11,7 +11,6 @@ function MPO_generator(n_modes,njuncs,fock_trunc)
 
     py_module = pyimport("Hamiltonian")
 
-    global sites
 
 
     print("I m here")
@@ -22,7 +21,7 @@ function MPO_generator(n_modes,njuncs,fock_trunc)
     print("Ready to make it an MPO")
 
     time_MPO_splitbox =@elapsed begin
-    H_MPO = MPO(H_operator,sites,splitblocks=true)
+    H_MPO = MPO(H_operator,sites,splitblocks=true,cutoff = 1e-9)
     end
     print("\n MPO splitbox creation time: ", time_MPO_splitbox,'\n')
     return H_MPO
@@ -42,32 +41,70 @@ function dmrg_A_B(H_MPO;n_eigs, nsweeps , maxdim , cutoff )
 end
 
 
-n_modes = 5
+
+
+function bench_dmrg(n_modes,njuncs,fock_trunc)
+    np = pyimport("numpy")
+
+    mode_freqs = np.array([rand(10^8:10^10) for x in 1:n_modes])
+    junc_freq = [rand(10^8:10^10) for x in 1:njuncs]
+    f_zp = np.array(rand(10^8:10^10,(n_modes,njuncs)))
+
+
+    sites = siteinds("Boson",n_modes,dim=fock_trunc)
+
+
+
+    #Julia Bench
+    time_Julia = @elapsed begin
+    H_MPO = MPO_generator(sites,n_modes,njuncs,fock_trunc)
+    eigenvalues,eigenvectors = dmrg_A_B(H_MPO,n_eigs=n_modes, nsweeps=20 , maxdim=50 , cutoff=1e-10)
+    end
+
+    #Qutip Bench
+    evals_qutip = []
+    time_qutip = @elapsed begin
+        py_module = pyimport("Hamiltonian")
+        evals_qutip = py_module.qutip_diag(mode_freqs,junc_freq,f_zp,fock_trunc,n_modes)
+    end
+
+    print("Julia needed: ",time_Julia," s\n Qutip needed ", time_qutip, " s")
+
+    print("\n Julia evals: \n", eigenvalues)
+    print("\n Qutip evals: \n", evals_qutip)
+    add_result_to_file("DMRG_bench",time_qutip,time_Julia,n_modes)
+end
+
+
+function add_result_to_file(filename::String,time_qutip,time_Julia,n_modes)
+
+
+    new_data = Dict("Qutip_time"=>time_qutip, "Julia_Time"=>time_Julia, "n_modes"=>n_modes)
+    data = Dict()
+    try
+    # read the contents of the file into a string
+        json_str = read(filename, String)
+        data = JSON.parse(json_str)
+
+    catch 
+        data = Dict("Simulations" => [])
+    end
+    
+    push!(data["Simulations"],new_data)
+
+    open(filename,"w") do f
+    JSON.print(f, data)
+    end
+    pyimport("Hamiltonian").indent_json(filename)
+end
+
+
+
+
+n_modes_vec = [2]
 njuncs = 3
-fock_trunc = 3
-np = pyimport("numpy")
+fock_trunc = 5
 
-mode_freqs = np.array([rand(10^8:10^10) for x in 1:n_modes])
-junc_freq = [rand(10^8:10^10) for x in 1:njuncs]
-f_zp = np.array(rand(10^8:10^10,(n_modes,njuncs)))
-sites = siteinds("Boson",n_modes,dim=fock_trunc)
-
-
-
-#Julia Bench
-time_Julia = @elapsed begin
-H_MPO = MPO_generator(n_modes,njuncs,fock_trunc)
-eigenvalues,eigenvectors = dmrg_A_B(H_MPO,n_eigs=n_modes, nsweeps=20 , maxdim=50 , cutoff=1e-10)
+for n_modes in n_modes_vec
+    bench_dmrg(n_modes,njuncs,fock_trunc)
 end
-
-#Qutip Bench
-evals_qutip = []
-time_qutip = @elapsed begin
-    py_module = pyimport("Hamiltonian")
-    evals_qutip = py_module.qutip_diag(mode_freqs,junc_freq,f_zp,fock_trunc,n_modes)
-end
-
-print("Julia needed: ",time_Julia," s\n Qutip needed ", time_qutip, " s")
-
-print("\n Julia evals: \n", eigenvalues)
-print("\n Qutip evals: \n", evals_qutip)

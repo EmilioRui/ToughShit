@@ -29,13 +29,18 @@ end
 
 
 function dmrg_A_B(H_MPO,sites,n_eigs, nsweeps , maxdim , cutoff )
-    eigenvectors = []
+    eigenvectors::Vector{MPS} = []
     eigenvalues = []
     for i in 1:n_eigs   
-        ψ0 = randomMPS(sites,30) 
-        energy, ψ = dmrg(H_MPO,ψ0; nsweeps, maxdim, cutoff)
+        ψ0 = randomMPS(sites,linkdims=50) 
+        if i == 1
+            energy, ψ = dmrg(H_MPO ,ψ0; nsweeps, maxdim, cutoff)
+        else
+            energy, ψ = dmrg(H_MPO ,eigenvectors, ψ0; nsweeps, maxdim, cutoff,weight=10,noise=1e-5  )
+        end
         push!(eigenvalues,energy)
         push!(eigenvectors,ψ)
+        display(inner(eigenvectors[end],eigenvectors[1]))
     end
     return eigenvalues,eigenvectors
 end
@@ -48,7 +53,7 @@ function bench_dmrg(n_modes,njuncs,fock_trunc)
 
     mode_freqs = np.array([rand(10^8:10^10) for x in 1:n_modes])
     junc_freq = [rand(10^8:10^10) for x in 1:njuncs]
-    f_zp = np.array(rand(10^8:10^10,(n_modes,njuncs)))
+    f_zp = np.array(rand(10^-3:10^-1,(n_modes,njuncs)))
 
 
     sites = siteinds("Boson",n_modes,dim=fock_trunc)
@@ -60,7 +65,7 @@ function bench_dmrg(n_modes,njuncs,fock_trunc)
     H_MPO = MPO_generator(sites,mode_freqs,junc_freq,f_zp,fock_trunc)
     n_eigs=n_modes
     nsweeps=20
-    maxdim=50
+    maxdim = 200
     cutoff=1e-10
     evals_dmrg,eigenvectors = dmrg_A_B(H_MPO,sites,n_eigs, nsweeps, maxdim, cutoff)
     end
@@ -104,9 +109,9 @@ end
 
 
 
-n_modes_vec = [2,3]
+n_modes_vec = [2,3,5]
 njuncs = 3
-fock_trunc = 5
+fock_trunc = 8
 
 for n_modes in n_modes_vec
     bench_dmrg(n_modes,njuncs,fock_trunc)

@@ -14,8 +14,8 @@ function MPO_generator(sites,n_modes,fock_trunc)
 
 
     #print("I m here")
-    H = np.matrix(py_module.matrix_construction(chip_name= "TAR-0012-01", num_modes= n_modes, cos_trunc=5, fock_trunc=fock_trunc))
-
+    H_qutip = py_module.matrix_construction(chip_name= "TAR-0012-01", num_modes= n_modes, cos_trunc=5, fock_trunc=fock_trunc)
+    H = np.matrix(H_qutip)
     H_operator = op(H, sites)
 
     print("Ready to make it an MPO")

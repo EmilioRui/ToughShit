@@ -9,7 +9,7 @@ function MPO_generator(sites,n_modes,fock_trunc)
 
    # f_zp =np.ones([n_modes,njuncs])
 
-    py_module = pyimport("./Real_Chips/Matrix_construction")
+    py_module = pyimport("Matrix_construction")
 
 
 

@@ -58,4 +58,4 @@ data = {"zpf":zpf,"Ejs":Ejs,"Njs":Njs, "freq" : freq}
 
 filename = 'Chip_Data/' + chip_name + '.json'
 with open(filename,'w') as f:
-    json.dump(f,data,indent=3)
+    json.dump(data,f,indent=3)

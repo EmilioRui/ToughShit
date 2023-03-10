@@ -51,6 +51,7 @@ end
 function bench_dmrg(n_modes,fock_trunc)
     np = pyimport("numpy")
 
+    sites = siteinds("Boson",n_modes,dim=fock_trunc)
 
 
     #Julia Bench

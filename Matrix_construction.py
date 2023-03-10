@@ -2,7 +2,7 @@ import numpy as np
 from abdb import *
 import qutip
 from qutip import basis, tensor
-
+import json
 
 
 def matrix_construction(chip_name= 'TAR-0012-01', num_modes= 4, cos_trunc=5, fock_trunc=8):
@@ -123,6 +123,16 @@ def matrix_construction(chip_name= 'TAR-0012-01', num_modes= 4, cos_trunc=5, foc
 
         return linear_part + nonlinear_part
 
+    filename = 'Chip_Data' + chip_name + '.json'
+    with open (filename, 'r') as f:
+        data = json.load(f)
+    
+    Njs = data['Njs']
+    Ejs = data['Ejs']
+    zpf = data['zpf']
+    freq = data['freq']
+
+    
     Ejs = np.array(Ejs)/(np.array(Njs)**2)
     Ejs= np.array(Ejs)
 

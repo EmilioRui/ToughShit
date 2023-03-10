@@ -55,6 +55,7 @@ for i, f in enumerate(freq_c):
     freq.append( (f + np.sum(chispice[i])) * 1e-9 )
 
 data = {"zpf":zpf,"Ejs":Ejs,"Njs":Njs, "freq" : freq}
-filename = chip_name + '.json'
+
+filename = 'Chip_Data/' + chip_name + '.json'
 with open(filename,'w') as f:
     json.dump(f,data,indent=3)

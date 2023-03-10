@@ -24,7 +24,7 @@ function MPO_generator(sites,n_modes,fock_trunc)
     H_MPO = MPO(H_operator,sites,splitblocks=true,cutoff = 1e-9)
     end
     print("\n MPO splitbox creation time: ", time_MPO_splitbox,'\n')
-    return H_MPO
+    return H_MPO,H
 end
 
 
@@ -56,7 +56,7 @@ function bench_dmrg(n_modes,fock_trunc)
 
     #Julia Bench
     time_Julia = @elapsed begin
-    H_MPO = MPO_generator(sites,n_modes,fock_trunc)
+    H_MPO,H_matrix = MPO_generator(sites,n_modes,fock_trunc)
     n_eigs=n_modes
     nsweeps=20
     maxdim = 200
@@ -68,7 +68,7 @@ function bench_dmrg(n_modes,fock_trunc)
     evals_qutip = []
     time_qutip = @elapsed begin
         py_module = pyimport("Hamiltonian")
-        evals_qutip = py_module.qutip_diag(mode_freqs,junc_freq,f_zp,fock_trunc,n_modes)
+        evals_qutip = py_module.qutip_diag(H_matrix,n_modes)
     end
 
     print("Julia needed: ",time_Julia," s\n Qutip needed ", time_qutip, " s")

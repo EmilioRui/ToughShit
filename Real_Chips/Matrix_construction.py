@@ -1,10 +1,16 @@
+import numpy as np
 from abdb import *
 import qutip
 from qutip import basis, tensor
 
 
 
-def matrix_construction(chip_name= 'TAR-0012-01', cos_trunc=5, fock_trunc=8):
+def matrix_construction(chip_name= 'TAR-0012-01', num_modes= 4, cos_trunc=5, fock_trunc=8):
+    '''num_modes should be < 5. Otherwise the matrix contruction will fail'''
+
+        ###########
+    ##### Part 1 : Extract information from ABDB #######################################################################
+        ###########
 
     var = Variation.query().get(f'{chip_name}')
     sim = var.simulations.first()
@@ -55,6 +61,10 @@ def matrix_construction(chip_name= 'TAR-0012-01', cos_trunc=5, fock_trunc=8):
     for i, f in enumerate(freq_c):
         freq.append( (f + np.sum(chispice[i])) * 1e-9 )
 
+        ###########
+    ##### Part 2 : Some preliminary functions for BBH function #####################################################
+        ###########
+
     _initial_missing = object()
 
     def dot(ais, bis):
@@ -102,46 +112,71 @@ def matrix_construction(chip_name= 'TAR-0012-01', cos_trunc=5, fock_trunc=8):
 
         return value
 
-    def tensor_out(op, loc):
-        "Make operator <op> tensored with identities at locations other than <loc>"
-        op_list = [qutip.qeye(fock_trunc) for i in range(n_modes)]
-        op_list[loc] = op
-        return reduce(qutip.tensor, op_list)
+        ###########
+    ##### Part 3 : BBH function #############################################################################################
+        ###########
 
-    def cos(x):
-        return cos_approx(x, cos_trunc=cos_trunc)
+    def black_box_hamiltonian(fs, ejs, fzpfs, cos_trunc=5, fock_trunc=8):
+        r"""
+        :param fs: Linearized model, H_lin, normal mode frequencies in Hz, length N
+        :param ljs: junction linerized inductances in Henries, length M
+        :param fzpfs: Zero-point fluctutation of the junction fluxes for each mode across each junction,
+                    shape MxJ
+        :return: Hamiltonian in units of Hz (i.e H / h)
+        All in SI units. The ZPF fed in are the generalized, not reduced, flux.
 
-    freqs= [*freq]
+        Description:
+        Takes the linear mode frequencies, $\omega_m$, and the zero-point fluctuations, ZPFs, and
+        builds the Hamiltonian matrix of $H_full$, assuming cos potential.
+        """
+        n_modes = len(fs)
+        njuncs = len(ejs)
+        fs, ejs, fzpfs = map(np.array, (fs, ejs, fzpfs))
+        # ejs = fluxQ**2 / ljs
+        fjs = ejs
 
-    Ejs=np.array(Ejs)/(np.array(Njs)**2)
+        fzpfs = np.transpose(fzpfs)  # Take from MxJ  to JxM
 
-    φzpf=[*zpf]
+        assert np.isnan(fzpfs).any(
+        ) == False, "Phi ZPF has NAN, this is NOT allowed! Fix me. \n%s" % fzpfs
+        assert np.isnan(ejs).any(
+        ) == False, "Ejs has NAN, this is NOT allowed! Fix me."
+        assert np.isnan(
+            fs).any() == False, "freqs has NAN, this is NOT allowed! Fix me."
+        assert fzpfs.shape == (njuncs, n_modes), "incorrect shape for zpf array, {} not {}".format(
+            fzpfs.shape, (njuncs, n_modes))
+        assert fs.shape == (n_modes,), "incorrect number of mode frequencies"
+        assert ejs.shape == (njuncs,), "incorrect number of qubit frequencies"
 
-    freqs, Ejs, φzpf = map(np.array, (freqs, Ejs, φzpf))
+        def tensor_out(op, loc):
+            "Make operator <op> tensored with identities at locations other than <loc>"
+            op_list = [qutip.qeye(fock_trunc) for i in range(n_modes)]
+            op_list[loc] = op
+            return reduce(qutip.tensor, op_list)
 
-    fs= freqs * 1E9
-    ejs= Ejs.astype(np.float) * 1E9
-    fzpfs= φzpf
+        a = qutip.destroy(fock_trunc)
+        ad = a.dag()
+        n = qutip.num(fock_trunc)
+        mode_fields = [tensor_out(a + ad, i) for i in range(n_modes)]
+        mode_ns = [tensor_out(n, i) for i in range(n_modes)]
 
-    n_modes = len(fs)
-    njuncs = len(ejs)
-    fs, ejs, fzpfs = map(np.array, (fs, ejs, fzpfs))
-    # ejs = fluxQ**2 / ljs
-    fjs = ejs
+        def cos(x):
+            return cos_approx(x, cos_trunc=cos_trunc)
+            
 
-    fzpfs = np.transpose(fzpfs)
+        linear_part = dot(fs, mode_ns)
+        cos_interiors = [dot(fzpf_row, mode_fields) for fzpf_row in fzpfs]
+        nonlinear_part = dot(-fjs, map(cos, cos_interiors))
 
-    
-    a = qutip.destroy(fock_trunc)
-    ad = a.dag()
-    n = qutip.num(fock_trunc)
-    mode_fields = [tensor_out(a + ad, i) for i in range(n_modes)]
-    mode_ns = [tensor_out(n, i) for i in range(n_modes)]
+        return linear_part + nonlinear_part
+
+    Ejs = np.array(Ejs)/(np.array(Njs)**2)
+    Ejs= np.array(Ejs)
+
+    return black_box_hamiltonian(fs= np.array(freq[:num_modes]) * 1E9, 
+                                ejs= Ejs.astype(np.float64) * 1E9, 
+                                fzpfs= np.array(zpf[:num_modes]), 
+                                cos_trunc=5, fock_trunc=8)
 
 
-    linear_part = dot(fs, mode_ns)
-    cos_interiors = [dot(fzpf_row, mode_fields) for fzpf_row in fzpfs]
-    nonlinear_part = dot(-fjs, map(cos, cos_interiors))
-
-    return linear_part + nonlinear_part
-    
+matrix_construction(chip_name= 'TAR-0012-01', num_modes= 4, cos_trunc=5, fock_trunc=8)

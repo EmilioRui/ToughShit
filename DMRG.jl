@@ -13,8 +13,8 @@ function MPO_generator(sites,n_modes,fock_trunc)
 
 
 
-    p#rint("I m here")
-    H = py_module.matrix_construction(chip_name= "TAR-0012-01", num_modes= n_modes, cos_trunc=5, fock_trunc=fock_trunc)
+    #print("I m here")
+    H = np.matrix(py_module.matrix_construction(chip_name= "TAR-0012-01", num_modes= n_modes, cos_trunc=5, fock_trunc=fock_trunc))
 
     H_operator = op(H, sites)
 
@@ -36,7 +36,7 @@ function dmrg_A_B(H_MPO,sites,n_eigs, nsweeps , maxdim , cutoff )
         if i == 1
             energy, ψ = dmrg(H_MPO ,ψ0; nsweeps, maxdim, cutoff)
         else
-            energy, ψ = dmrg(H_MPO ,eigenvectors, ψ0; nsweeps, maxdim, cutoff,weight=10,noise=1e-5  )
+            energy, ψ = dmrg(H_MPO ,eigenvectors, ψ0; nsweeps, maxdim, cutoff,weight=1e10,noise=1e5 )
         end
         push!(eigenvalues,energy)
         push!(eigenvectors,ψ)

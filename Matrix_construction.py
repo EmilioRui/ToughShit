@@ -123,7 +123,7 @@ def matrix_construction(chip_name= 'TAR-0012-01', num_modes= 4, cos_trunc=5, foc
 
         return linear_part + nonlinear_part
 
-    filename = 'Chip_Data' + chip_name + '.json'
+    filename = 'Chip_Data/' + chip_name + '.json'
     with open (filename, 'r') as f:
         data = json.load(f)
     

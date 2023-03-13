@@ -139,7 +139,7 @@ def matrix_construction(chip_name= 'TAR-0012-01', num_modes= 4, cos_trunc=5, foc
     return black_box_hamiltonian(fs= np.array(freq[:num_modes]) * 1E9, 
                                 ejs= Ejs.astype(np.float64) * 1E9, 
                                 fzpfs= np.array(zpf[:num_modes]), 
-                                cos_trunc=5, fock_trunc=8)
+                                cos_trunc=cos_trunc, fock_trunc=fock_trunc)
 
 
-matrix_construction(chip_name= 'TAR-0012-01', num_modes= 4, cos_trunc=5, fock_trunc=8)
+# matrix_construction(chip_name= 'TAR-0012-01', num_modes= 4, cos_trunc=5, fock_trunc=8)

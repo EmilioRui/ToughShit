@@ -135,12 +135,18 @@ def make_dispersive(H, fock_trunc, fzpfs=None, f0s=None, chi_prime=False,
     else:  # make sure its a quanutm object
         assert type(
             H) == qutip.qobj.Qobj, "Please pass in either  a list of Qobjs or Qobj for the Hamiltonian"
-    # print("Starting the diagonalization")
-    evals, evecs = H.eigenstates()
-    # print("Finished the diagonalization")
-    evals -= evals[0]
+
+
     N = int(np.log(H.shape[0]) / np.log(fock_trunc))    # number of modes
     assert H.shape[0] == fock_trunc ** N
+
+    print("Starting the diagonalization")
+    evals, evecs = H.eigenstates(sparse= True, eigvals= N)
+    #May give a memory error !
+    # print("Finished the diagonalization")
+    evals -= evals[0]
+
+
     def fock_state_on(d):
         ''' d={mode number: # of photons} '''
         return qutip.tensor(*[qutip.basis(fock_trunc, d.get(i, 0)) for i in range(N)])  # give me the value d[i]  or 0 if d[i] does not exist
@@ -218,10 +224,9 @@ def make_dispersive(H, fock_trunc, fzpfs=None, f0s=None, chi_prime=False,
         return np.array(f1s), np.array(chis), np.array(fzpfs), np.array(f0s)
     
 def qutip_diag(H,n_modes):
-    evals, evecs = H.eigenstates(eigvals=n_modes)
-    return evals
-
-
+    evals, evecs = H.eigenstates()
+    evals -= evals[0]
+    return evals[:n_modes]
 
 
 def indent_json(filename):

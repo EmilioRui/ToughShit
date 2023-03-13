@@ -3,9 +3,7 @@ using ITensors
 using JSON
 push!(pyimport("sys")."path", pwd())
 
-function H_generator(chip_name= "TAR-0012-01", n_modes, cos_trunc, fock_trunc)
-    
-    sites = siteinds("Boson",n_modes,dim=fock_trunc)
+function H_generator(chip_name= "TAR-0012-01",fock_trunc= 8)
     # construct the file path
     filename = "Chip_Data/" * chip_name * ".json"
     # open the file and read its contents into the data variable
@@ -13,17 +11,23 @@ function H_generator(chip_name= "TAR-0012-01", n_modes, cos_trunc, fock_trunc)
     #     JSON.parse(read(file, String))
     # end
     data = JSON.parsefile(filename)
-    Ej = (data["Ejs"]/(data["Njs"])^2)*1e9
+
+    Ej = (data["Ejs"]/(data["Njs"].*data["Njs"])).*1e9
     𝜑_zpf = data["zpf"]
-    freq = data["freq"]*1e9
+    freq = data["freq"].*1e9
+
     M = length(freq)
     J= length(Ej)
+
+    sites = siteinds("Boson", M, dim=fock_trunc)
+
     print("Creating linear part of your Hamiltonian ...")
     H_lin = OpSum()
     for m=1:M
         H_lin += freq[m],"N",m
     end
     print("Linear part of your Hamiltonian has been created in $time s")
+
     print("Creating nonlinear part of your Hamiltonian ...")
     H_nonlin = OpSum()
     for j=1:J
@@ -40,7 +44,12 @@ function H_generator(chip_name= "TAR-0012-01", n_modes, cos_trunc, fock_trunc)
         H_nonlin += Ej[j]*cos_𝜑_j
     end
     print("Non linear part of your Hamiltonian has been created in $time s")
-    return H_lin + H_nonlin
+    H_tot = H_lin + H_nonlin
+
+    print("Generating MPO")
+    H_MPO = MPO(H_tot,sites,splitblocks=true,cutoff = 1e-9)
+
+    return H_tot , H_MPO
 end
 
 
@@ -141,11 +150,11 @@ function add_result_to_file(filename::String,time_qutip,time_Julia,n_modes,evals
 end
 
 
+H_generator()
 
+# n_modes_vec = [2,3,4,5]
+# fock_trunc = 8
 
-n_modes_vec = [2,3,4,5]
-fock_trunc = 8
-
-for n_modes in n_modes_vec
-    bench_dmrg(n_modes,fock_trunc)
-end
+# for n_modes in n_modes_vec
+#     bench_dmrg(n_modes,fock_trunc)
+# end

@@ -55,14 +55,22 @@ function bench_dmrg(n_modes,fock_trunc)
 
 
     #Julia Bench
-    time_Julia = @elapsed begin
+    time_H_creation = @elapsed begin
     H_MPO,H_matrix = MPO_generator(sites,n_modes,fock_trunc)
+    end
+    println("Hamiltonian creation time : ",time_H_creation, " s")
+
+    
+
+    time_Julia = @elapsed begin
     n_eigs=n_modes
     nsweeps=20
     maxdim = 200
     cutoff=1e-10
     evals_dmrg,eigenvectors = dmrg_A_B(H_MPO,sites,n_eigs, nsweeps, maxdim, cutoff)
     end
+
+    println("DMRG optimization time: ", time_Julia, " s")
 
     #Qutip Bench
     evals_qutip = []
@@ -71,17 +79,23 @@ function bench_dmrg(n_modes,fock_trunc)
         evals_qutip = py_module.qutip_diag(H_matrix,n_modes)
     end
 
-    print("Julia needed: ",time_Julia," s\n Qutip needed ", time_qutip, " s")
+    println("Qutip optimization time: ", time_qutip, " s")
 
     # print("\n Julia evals: \n", eigenvalues)
     # print("\n Qutip evals: \n", evals_qutip)
-    add_result_to_file("DMRG_bench 2.json",time_qutip,time_Julia,n_modes,evals_qutip ,evals_dmrg)
+    add_result_to_file("DMRG_bench 2.json",time_H_creation,time_qutip,time_Julia,n_modes,evals_qutip ,evals_dmrg)
 end
 
 
-function add_result_to_file(filename::String,time_qutip,time_Julia,n_modes,evals_qutip,evals_dmrg)
+function add_result_to_file(filename::String,time_H_creation,time_qutip,time_Julia,n_modes,evals_qutip,evals_dmrg)
 
-    new_data = Dict("n_modes"=>n_modes,"Qutip_time"=>time_qutip, "Julia_Time"=>time_Julia,"Qutip Evals"=>evals_qutip,"DMRG evals"=>evals_dmrg)
+    #relative error is (eig_Julia - eig Qutip / eig_Qutip
+    realtive_error = (evals_qutip - evals_dmrg)./evals_qutip
+
+
+    new_data = Dict("n_modes"=>n_modes,"Time_Qutip"=>time_qutip,
+     "Time_Julia"=>time_Julia,"Time_H"=>time_H_creation,"Qutip Evals"=>evals_qutip,"DMRG evals"=>evals_dmrg,
+      "Realative_Error"=>realtive_error)
     data = Dict()
     try
     # read the contents of the file into a string
@@ -103,7 +117,7 @@ end
 
 
 
-n_modes_vec = [2,3,5]
+n_modes_vec = [2]
 fock_trunc = 8
 
 for n_modes in n_modes_vec

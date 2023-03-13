@@ -112,7 +112,7 @@ function bench_dmrg(n_modes,fock_trunc)
     
 
     time_Julia = @elapsed begin
-    n_eigs=n_modes
+    n_eigs=n_modes*3
     nsweeps=20
     maxdim = 200
     cutoff=1e-10
@@ -126,7 +126,7 @@ function bench_dmrg(n_modes,fock_trunc)
     evals_qutip = []
     time_qutip = @elapsed begin
         py_module = pyimport("Hamiltonian")
-        evals_qutip = py_module.qutip_diag(H_matrix,n_modes)
+        evals_qutip = py_module.qutip_diag(H_matrix,n_eigs)
     end
 
     println("Qutip optimization time: ", time_qutip, " s")

@@ -128,7 +128,7 @@ function bench_dmrg(n_modes,fock_trunc)
         py_module = pyimport("Hamiltonian")
         evals_qutip = py_module.qutip_diag(H_matrix,n_eigs)
     end
-
+    
     println("Qutip optimization time: ", time_qutip, " s")
 
     # print("\n Julia evals: \n", eigenvalues)

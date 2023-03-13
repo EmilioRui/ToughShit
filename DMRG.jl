@@ -140,12 +140,12 @@ end
 function add_result_to_file(filename::String,time_H_creation,time_qutip,time_Julia,n_modes,evals_qutip,evals_dmrg)
 
     #relative error is (eig_Julia - eig Qutip / eig_Qutip
-    realtive_error = (evals_qutip - evals_dmrg)./evals_qutip
+    realtive_error = abs((evals_qutip - evals_dmrg)./evals_qutip)
 
 
     new_data = Dict("n_modes"=>n_modes,"Time_Qutip"=>time_qutip,
-     "Time_Julia"=>time_Julia,"Time_H"=>time_H_creation,"Qutip Evals"=>evals_qutip,"DMRG evals"=>evals_dmrg,
-      "Realative_Error"=>realtive_error)
+     "Time_Julia"=>time_Julia,"Time_H"=>time_H_creation,"Qutip_Evals"=>evals_qutip,"DMRG_Evals"=>evals_dmrg,
+      "Relative_Error"=>realtive_error)
     data = Dict()
     try
     # read the contents of the file into a string
